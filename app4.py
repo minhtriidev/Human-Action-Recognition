@@ -18,8 +18,8 @@ import matplotlib.pyplot as plt
 
 
 # Define your Telegram bot token and chat ID
-bot_token = "6702157131:AAHLopyJhuNij-Qkez5YySW7td__L31zzHM"
-chat_id = "5607828483"
+bot_token = "replace with your token"
+chat_id = "replace with your id"
 # Create a Telegram bot instance
 bot = Bot(token=bot_token)
 
