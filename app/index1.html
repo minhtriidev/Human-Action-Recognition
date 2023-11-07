@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Video Player with Frame Capture</title>
+</head>
+<body>
+    <h1>Video Player with Frame Capture</h1>
+    <label for="video_url">Enter Video URL:</label>
+    <input type="text" id="video_url" placeholder="Enter video URL">
+    <button onclick="playVideo()">Play Video</button>
+    <button onclick="captureFrames()">Capture Frames</button>
+    <button id="skeleton-button" onclick="skeletonAction()">Show Skeleton</button>
+    <br>
+    <video controls id="video_player" style="display: none;"></video>
+    <img id="skeleton-image" src="" alt="Skeleton Image" style="display: none;">
+    <input type="range" id="frame_slider" min="0" max="0" value="0" oninput="seekFrame()">
+    <br>
+    <p>Current Frame: <span id="current_frame">0</span></p>
+    <img id="skeleton-image" src="" alt="Skeleton Image" style="display: none;">
+    <div id="label_display" style="display: none;">Current Label: </div>
+
+    <script>
+        let showSkeleton = false; // Track if showing skeleton overlay
+        var videoPlayer = document.getElementById("video_player");
+        var frameSlider = document.getElementById("frame_slider");
+        var currentFrameLabel = document.getElementById("current_frame");
+        var videoFps = 30; // Đặt giá trị FPS của video tại đây
+        var frameData = [];
+        var imagesArray = []; // Mảng lưu trữ hình ảnh từ WebSocket
+        var videoUrl = ""; // Biến lưu URL video
+        var labelDisplay = document.getElementById("label_display");
+        var socket = new WebSocket("ws://localhost:8000/ws"); // WebSocket URL
+        var labelArray = [];
+        var currentImage = ""
+        socket.onmessage = function (event) {
+            var labelData = JSON.parse(event.data);
+            var currentLabel = labelData.label;
+            var currentFrame = labelData.frame;
+            labelArray.push({ label: currentLabel, frame: currentFrame });
+            frameSlider.value = currentFrame;
+            updateFrameLabel(currentFrame);
+        };
+
+        var socket_img = new WebSocket("ws://localhost:8000/ws_img"); // WebSocket URL
+        socket_img.onmessage = function (event) {
+            const skeletonImage = document.getElementById("skeleton-image");
+            var imageData = JSON.parse(event.data);
+            var currentImage = imageData.image;
+            imagesArray.push({ image: currentImage });
+
+            // Set the image source to the created URL
+            skeletonImage.src = "data:image/png;base64," + currentImage;
+        };
+
+        videoPlayer.addEventListener("loadedmetadata", function() {
+            var totalFrames = Math.floor(videoPlayer.duration * videoFps);
+            console.log(totalFrames)
+            frameSlider.max = totalFrames;
+        });
+
+        function playVideo() {
+            videoUrl = document.getElementById("video_url").value;
+
+            videoPlayer.src = videoUrl;
+            videoPlayer.style.display = "block";
+            
+        }
+        
+        function skeletonAction() {
+            const skeletonImage = document.getElementById("skeleton-image");
+            const skeletonButton = document.getElementById("skeleton-button");
+
+            if (!showSkeleton) {
+                showSkeleton = true;
+                videoUrl = document.getElementById("video_url").value;
+                videoPlayer.src = videoUrl;
+                videoPlayer.style.display = "block";
+                skeletonButton.textContent = "Hide skeleton";
+                skeletonImage.style.display = "block"; // Hiển thị thẻ <img>
+                // Di chuyển video container về bên trái và skeleton image về bên phải
+                skeletonImage.style.position = "fixed";
+                skeletonImage.style.top = '20%';
+                skeletonImage.style.right = '10%';
+                
+            } else {
+                showSkeleton = false;
+                skeletonButton.textContent = "Show Skeleton";
+                skeletonImage.style.display = "none"; // Ẩn thẻ <img>
+                // Clear the skeleton image source
+                skeletonImage.src = "";
+                
+            }
+            
+        }
+
+        function seekFrame() {
+            var targetFrame = frameSlider.value;
+            var targetTime = targetFrame / videoFps;
+            videoPlayer.currentTime = targetTime;
+            updateFrameLabel(targetFrame);
+        }
+
+        function updateFrameLabel(frame) {
+            currentFrameLabel.innerText = frame;
+        }
+
+        videoPlayer.addEventListener("timeupdate", function() {
+            var currentFrame = Math.floor(videoPlayer.currentTime * videoFps);
+            frameSlider.value = currentFrame;
+            // Tìm nhãn tương ứng với currentFrame trong mảng labelData
+            labelDisplay.style.display = "block";
+            var currentLabel = findLabelByFrame(labelArray, currentFrame);
+            var currentImage = findImageByFrame(imagesArray, currentFrame);
+            console.log(imagesArray.length)
+            
+            // Hiển thị currentLabel tại vị trí hiện thời trên giao diện của bạn
+            displayLabel(currentLabel);
+            updateFrameLabel(currentFrame);
+        });
+        
+        // Hàm tìm nhãn dựa trên frame
+        function findLabelByFrame(labelArray, frame) {
+            for (var i = 0; i < labelArray.length; i++) {
+                if (labelArray[i].frame === frame) {
+                    return labelArray[i].label;
+                }
+            }
+            return "Unknown"; // Trả về "Unknown" nếu không tìm thấy nhãn
+        }
+
+        // Hàm hiển thị nhãn trên giao diện của bạn
+        function displayLabel(label) {
+            // Hiển thị label ở vị trí mong muốn trong giao diện của bạn
+            labelDisplay.innerText = "Current Label: " + label;
+        }
+
+        // Hàm tìm nhãn dựa trên frame
+        function findImageByFrame(imagesArray, frame) {
+            for (var i = 0; i < imagesArray.length; i++) {
+                if (imagesArray[i].frame === frame) {
+                    return imagesArray[i].image;
+                }
+            }
+            return "Unknown"; // Trả về "Unknown" nếu không tìm thấy nhãn
+        }
+
+
+        function captureFrames() {
+            // Gửi videoUrl và frameData cho mã Python bằng cách sử dụng XMLHttpRequest hoặc fetch API
+            // Ví dụ: sử dụng XMLHttpRequest
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/capture_frames", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            var data = { "video_url": videoUrl, "frames": frameData };
+            xhr.send(JSON.stringify(data));
+        }
+        
+    </script>
+</body>
+</html>

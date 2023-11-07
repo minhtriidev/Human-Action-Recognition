@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title id="page-title">Human Action Recognition</title>
+    <style>
+        #video-container {
+            display: none;
+            overflow: hidden;
+            width: 100%;
+            height: 100vh;
+        }
+        #button-container {
+            display: flex;
+            justify-content: center; /* Horizontally center the buttons */
+            margin-top: 20px; /* Add some spacing at the top */
+        }
+        /* Style the buttons */
+        button {
+            margin: 0 10px; /* Add spacing between buttons */
+        }
+        #video-stream {
+            width: 100%;
+            height: 100vh;
+            border: none;
+        }
+        #detect-button {
+            display: none;
+            left: 50%;
+        }
+        #skeleton-button {
+            display: none;
+            left: 40%;
+        }
+        #actionResult {
+            display: none;
+            color: red;
+            font-size: 24px; /* Adjust the font size as needed */
+            font-weight: bold; /* Make the text bold */
+            position: absolute;
+            top: 150px;
+            left: 100px;
+            z-index: 1;
+        }
+        #page-title {
+            position: fixed;
+            left: 30%;
+        }
+    </style>
+</head>
+<body>
+    <div id="page-title">
+        <h1>Human Action Recognition</h1>
+        <div id="button-container">
+            <button id="stream-button" onclick="toggleStream()">Start Stream</button>
+            <button id="copy-url-button" onclick="copyStreamURL()">Parse Video URL</button>
+            <button id="detect-button" onclick="detectAction()">Detect Action</button>
+            <button id="skeleton-button" onclick="skeletonAction()">Show Skeleton</button>
+        </div>
+        <div id="url-box" style="display: none;">
+            <input type="text" id="stream-url">
+            <button id="show-video-button" onclick="showVideo()">Show Video</button>
+        </div>
+    </div>
+    <img id="skeleton-image" src="" alt="Skeleton Image" style="display: none;">
+    <div id="actionResult" style="display: none;"></div>
+    <div id="video-container">
+        <iframe id="video-stream"></iframe>
+    </div>
+    <script>
+        let streaming = false; // Track if streaming is active
+        let showSkeleton = false; // Track if showing skeleton overlay
+        let detecting = false;
+        let copyURL = false; // Track if copying URL is active
+        const skeletonOverlay = document.getElementById("skeleton-overlay");
+        const actionButtons = document.getElementById("action-buttons");
+        const actionResultDiv = document.getElementById('actionResult');
+       
+
+        // Hàm để chuyển đổi trạng thái copy URL
+        async function copyStreamURL() {
+            const copyURLButton = document.getElementById("copy-url-button");
+            const urlBox = document.getElementById("url-box");
+            const detectButton = document.getElementById("detect-button"); // Lấy thẻ nút "Detect Action"
+            const skeletonButton = document.getElementById("skeleton-button"); // Lấy thẻ nút "Detect Action"
+            if (!copyURL) {
+                copyURL = true;
+                copyURLButton.textContent = "Back to main screen";
+                urlBox.style.display = "block";
+                document.getElementById("stream-url").value = "";
+                detectButton.style.display = "block";
+                skeletonButton.style.display = "block";
+            } else {
+                copyURL = false;
+                copyURLButton.textContent = "Parse Video URL";
+                urlBox.style.display = "none";
+                detectButton.style.display = "none"; // Ẩn nút "Detect Action"
+                skeletonButton.style.display = "none"; // Ẩn nút "Skeleton Action"
+            }
+        }
+
+        // Hàm để hiển thị video từ URL
+        async function showVideo() {
+            const streamURL = document.getElementById("stream-url").value;
+            const video = document.getElementById("video-stream");
+            const response = await fetch("/set_stream_url", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ video_url: streamURL })
+            });
+            
+            if (response.ok) {
+                console.log("Video URL sent to server");
+            } else {
+                console.error("Failed to send video URL");
+            }
+            video.src = "/video_feed"; // URL of your FastAPI endpoint
+            const videoContainer = document.getElementById("video-container");
+            if (streamURL) {
+                videoContainer.style.display = "block";
+                videoContainer.style.position = "fixed";
+                videoContainer.style.top = '20%';
+                videoContainer.style.left = '30%';
+              }
+            
+        }
+
+
+        // Hàm để bắt đầu/đóng stream
+        async function toggleStream() {
+            const video = document.getElementById("video-stream");
+            const videoContainer = document.getElementById("video-container");
+            const streamButton = document.getElementById("stream-button");
+            const detectButton = document.getElementById("detect-button"); // Lấy thẻ nút "Detect Action"
+            const skeletonButton = document.getElementById("skeleton-button"); // Lấy thẻ nút "Detect Action"
+
+            if (!streaming) {
+                video.src = "/video_feed"; // URL of your FastAPI endpoint
+                videoContainer.style.display = "block";
+                streamButton.textContent = "Close Stream";
+                detectButton.style.display = "block"; // Hiển thị nút "Detect Action"
+                skeletonButton.style.display = "block"; // Hiển thị nút "Skeleton Action"
+                videoContainer.style.position = "fixed";
+                videoContainer.style.top = '20%';
+                videoContainer.style.left = '30%';
+            } else {
+                video.src = "";
+                videoContainer.style.display = "none";
+                streamButton.textContent = "Start Stream";
+                detectButton.style.display = "none"; // Ẩn nút "Detect Action"
+                skeletonButton.style.display = "none"; // Ẩn nút "Skeleton Action"
+            }
+
+            streaming = !streaming; // Toggle the streaming status
+            detecting = false; // Đặt detecting về false khi đóng stream
+            showSkeleton = false
+        }
+
+        // Hàm để bắt đầu/đóng quá trình nhận diện hành động
+        async function detectAction() {
+            const detectButton = document.getElementById("detect-button");
+
+            if (!detecting) {
+                detecting = true;
+                detectButton.textContent = "Stop Detection";
+                // Bắt đầu gọi hàm để gán nhãn liên tục lên web-server
+                startContinuousDetection();
+            } else {
+                detecting = false;
+                detectButton.textContent = "Detect Action";
+                // Dừng quá trình nhận diện bằng cách không gọi tiếp hàm sendDetectionRequest
+            }
+        }
+
+        // Hàm để gọi liên tục và gán nhãn lên web-server
+        function startContinuousDetection() {
+            // Sử dụng setInterval để gọi hàm sendDetectionRequest liên tục
+            // Ví dụ gọi mỗi 1000ms (1 giây)
+            setInterval(sendDetectionRequest, 100);
+        }
+
+        // Hàm để gửi request nhận diện lên server
+        async function sendDetectionRequest() {
+            // Gửi AJAX request lên server để nhận diện hành động
+            // Sử dụng fetch hoặc XMLHttpRequest để gửi request
+            try {
+                const response = await fetch("/detect_action", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    actionResultDiv.style.display = 'block';
+                    actionResultDiv.textContent = `${data.current_label}`;
+                } else {
+                    console.error("Failed to fetch data");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+        // Hàm để bắt đầu/đóng quá trình nhận diện hành động
+        async function skeletonAction() {
+            const skeletonButton = document.getElementById("skeleton-button");
+            const skeletonImage = document.getElementById("skeleton-image");
+            const videoContainer = document.getElementById("video-container"); // Thêm dòng này
+
+            if (!showSkeleton) {
+                showSkeleton = true;
+                skeletonButton.textContent = "Hide skeleton";
+                skeletonImage.style.display = "block"; // Hiển thị thẻ <img>
+                startReceivingSkeleton();
+                // Di chuyển video container về bên trái và skeleton image về bên phải
+                skeletonImage.style.position = "fixed";
+                skeletonImage.style.top = '20%';
+                skeletonImage.style.right = '10%';
+                videoContainer.style.position = "fixed";
+                videoContainer.style.top = '20%';
+                videoContainer.style.left = '5%';
+            } else {
+                showSkeleton = false;
+                skeletonButton.textContent = "Show Skeleton";
+                skeletonImage.style.display = "none"; // Ẩn thẻ <img>
+                // stopReceivingSkeleton();
+                // Clear the skeleton image source
+                skeletonImage.src = "";
+                // Khôi phục lại hiển thị ban đầu của các phần tử
+                videoContainer.style.display = "none";
+                
+            }
+        }
+
+        function startReceivingSkeleton() {
+            const ws = new WebSocket("ws://" + window.location.host + "/ws_skeleton_image");
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                const skeletonImage = document.getElementById("skeleton-image");
+                skeletonImage.src = "data:image/jpg;base64," + data.image_base64;
+            };
+
+            ws.onclose = function() {
+                console.log("WebSocket connection for skeleton images closed");
+            };
+        }
+
+        // Hàm để gửi ảnh skeleton lên server và cập nhật liên tục
+        async function sendSkeletonImage() {
+            try {
+                const response = await fetch("/send_skeleton_image", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const skeletonImage = document.getElementById("skeleton-image");
+                    skeletonImage.src = "data:image/png;base64," + data.image_base64;
+                } else {
+                    console.error("Failed to fetch skeleton image");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+            }
+        }
+
+    </script>
+</body>
+</html>
