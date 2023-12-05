@@ -1,0 +1,5 @@
+--2023-09-05 16:35:38--  https://cdn.pixabay.com/vimeo/443528326/meditation-45658.mp4?width=1280
+Resolving cdn.pixabay.com (cdn.pixabay.com)... 172.64.147.160, 104.18.40.96, 2606:4700:4400::ac40:93a0, ...
+Connecting to cdn.pixabay.com (cdn.pixabay.com)|172.64.147.160|:443... connected.
+GnuTLS: The TLS connection was non-properly terminated.
+Unable to establish SSL connection.
