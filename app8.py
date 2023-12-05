@@ -14,6 +14,7 @@ import json
 
 from telegram import Bot, Update
 from telegram.ext import Updater, CommandHandler, CallbackContext
+# pip install python-telegram-bot
 
 os.chdir("/home/orangepi/Documents/Human-Action-Recognition")
 
@@ -82,7 +83,7 @@ model.load_state_dict(torch.load('/home/orangepi/Documents/Human-Action-Recognit
 model.eval()
 
 # Initialize camera
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 # Variables
 lm_list = []  # Pose landmarks list
