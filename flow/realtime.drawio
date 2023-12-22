@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-12-22T10:55:35.983Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="ClKWZrEZCHQAU2EzCr9M" version="22.1.11" type="github">
+<mxfile host="app.diagrams.net" modified="2023-12-22T10:56:07.824Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="MBrl7ztERec0DOht2izw" version="22.1.11" type="github">
   <diagram name="Page-1" id="bvei_Y0Dut0_T-lqSqIg">
     <mxGraphModel dx="522" dy="605" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
@@ -91,8 +91,8 @@
         <mxCell id="adEXGfA2NYlbfRjMIjfM-21" value="&lt;b&gt;N&lt;/b&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="310" y="390" width="60" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="adEXGfA2NYlbfRjMIjfM-22" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Cut 8 oldest frames&lt;/font&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="362.5" y="590" width="125" height="60" as="geometry" />
+        <mxCell id="adEXGfA2NYlbfRjMIjfM-22" value="&lt;b&gt;&lt;font style=&quot;font-size: 14px;&quot;&gt;Remove &lt;br&gt;8 oldest frames&lt;/font&gt;&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="363" y="590" width="124.5" height="60" as="geometry" />
         </mxCell>
         <mxCell id="adEXGfA2NYlbfRjMIjfM-23" value="" style="endArrow=classic;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="1" source="adEXGfA2NYlbfRjMIjfM-14" target="adEXGfA2NYlbfRjMIjfM-22" edge="1">
           <mxGeometry width="50" height="50" relative="1" as="geometry">
